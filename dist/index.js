@@ -13,7 +13,6 @@ class NodeMndp extends events.EventEmitter {
         };
         this.version = options.version || this.default.version;
         this.server = dgram.createSocket(this.version);
-        dgram.createSocket(this.version);
         this.port = options.port || this.default.port;
         this.host = options.host || this.default.host;
         this.registerListeners();

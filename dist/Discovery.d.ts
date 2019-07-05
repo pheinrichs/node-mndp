@@ -8,15 +8,9 @@ export declare class Discovery {
     /**
      * Output device information
      */
-    output(callback: (response: Device) => void): any;
+    output(callback: (response: Device) => void): void;
     /**
      * Format the buffer array
      */
     private format(callback);
-    /**
-     * Decode the length / the value
-     * @param start Byte to start
-     * @param callback
-     */
-    private decode(start);
 }
