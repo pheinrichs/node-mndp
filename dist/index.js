@@ -13,9 +13,9 @@ class NodeMndp extends events.EventEmitter {
         };
         this.version = options.version || this.default.version;
         this.server = dgram.createSocket(this.version);
-        dgram.createSocket(this.version);
         this.port = options.port || this.default.port;
         this.host = options.host || this.default.host;
+        this.started = false;
         this.registerListeners();
     }
     /**
@@ -23,6 +23,7 @@ class NodeMndp extends events.EventEmitter {
      */
     start() {
         if (this.server) {
+            this.started = true;
             this.server.bind(this.port, this.host);
         }
     }
@@ -30,8 +31,9 @@ class NodeMndp extends events.EventEmitter {
      * Stop the server
      */
     stop() {
-        if (this.server) {
+        if (this.server && this.started) {
             this.server.close();
+            this.started = false;
         }
     }
     /**

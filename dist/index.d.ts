@@ -7,6 +7,7 @@ export declare class NodeMndp extends events.EventEmitter {
     default: Options;
     port: undefined | number;
     host: undefined | string;
+    started: undefined | boolean;
     version: dgram.SocketType;
     constructor(options: Options);
     /**
