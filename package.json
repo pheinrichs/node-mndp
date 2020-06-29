@@ -1,6 +1,6 @@
 {
   "name": "node-mndp",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Mikrotik Network Discovery Protocol in Node",
   "main": "./dist/index.js",
   "scripts": {

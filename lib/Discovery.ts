@@ -1,9 +1,6 @@
 import { Device } from './interfaces/device';
 import { Rinfo } from './interfaces/rinfo';
-import { DecodeOutput } from './interfaces/decodeOutput';
 import { buf2hex, bin2String } from './util/format';
-
-declare var Promise: any;
 
 export class Discovery {
 
@@ -18,8 +15,7 @@ export class Discovery {
     /**
      * Output device information
      */
-    output(callback: (response: Device) => void): any
-    {
+    output(callback: (response: Device) => void): void {
         this.format((response) => {
             callback(response);
         });
@@ -28,52 +24,59 @@ export class Discovery {
     /**
      * Format the buffer array
      */
-    private format(callback: (device: Device) => void): any
-    {
+    private format(callback: (device: Device) => void): void {
         let device = {
             ipAddress: this.info.address,
             macAddress: '',
             identity: '',
-            version: ''
+            version: '',
+            platform: '',
+            uptime: 0,
+            board: ''
         };
 
         /**
          * Mikrotik FirstByte starts at 8
          */
-        let first_byte = 8;
-        
-        this.decode(first_byte).then((response) => {
-            device.macAddress = buf2hex(response.buffer);
-            first_byte += response.length + 4;
-            return this.decode(first_byte);
-        }).then((response) => {
-            device.identity = bin2String(response.buffer);
-            first_byte += response.length + 4;
-            return this.decode(first_byte);
-        }).then((response) => {
-            device.version = response.buffer.toString();
-        }).then(() => {
-            callback(device);
-        })
-    }
 
+        let bufferLength = this.msg.buffer.byteLength;
+        let offset = 4;
+        while (offset + 4 < bufferLength) {
+            let attrHead = Buffer.from(this.msg.buffer.slice(offset, offset + 4));
+            let attrType = attrHead.readUInt16BE(0);
+            let attrLength = attrHead.readUInt16BE(2);
+            offset += 4;
+            if (offset + attrLength > bufferLength){
+                console.warn('invalid mndp packet: attribute too long');
+                break;
+            }
 
-    /**
-     * Decode the length / the value
-     * @param start Byte to start
-     * @param callback 
-     */
-    private decode(start: number): Promise<DecodeOutput>
-    {
-        return new Promise((resolve:any, reject:any) => {
-            let lengthArray: Buffer = new Buffer(this.msg.buffer.slice(start - 2, start));
-            let length = lengthArray.readIntBE(0,lengthArray.byteLength);
-            let item: Buffer = new Buffer(this.msg.slice(start, start + length));
-    
-            resolve({
-                buffer: item,
-                length: length
-            });
-        })
+            switch (attrType) {
+                case 1: // mac address
+                    device.macAddress = buf2hex(this.msg.subarray(offset, offset + attrLength));
+                    break;
+                case 5: // identity
+                    device.identity = bin2String(this.msg.subarray(offset, offset + attrLength));
+                    break;
+                case 7: // version
+                    device.version = bin2String(this.msg.subarray(offset, offset + attrLength));
+                    break;
+                case 8: // platform
+                    device.platform = bin2String(this.msg.subarray(offset, offset + attrLength));
+                    break;
+                case 10: // uptime
+                    device.uptime = Buffer.from(this.msg.slice(offset, offset + attrLength)).readUInt32LE(0);
+                    break;
+                case 12: // board
+                    device.board = bin2String(this.msg.subarray(offset, offset + attrLength));
+                    break;
+                default: // unknown type
+                    console.debug('unknown mndp message type', attrType);
+                    break;
+            }
+
+            offset += attrLength;
+        }
+        callback(device);
     }
 }

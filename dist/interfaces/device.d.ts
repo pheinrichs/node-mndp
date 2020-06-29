@@ -3,4 +3,7 @@ export interface Device {
     macAddress: string;
     version: string;
     identity: string;
+    platform: string;
+    uptime: number;
+    board: string;
 }
