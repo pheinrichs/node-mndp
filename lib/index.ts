@@ -16,6 +16,7 @@ export class NodeMndp extends events.EventEmitter {
 
     port: undefined | number;
     host: undefined | string;
+    started: undefined | boolean;
     version: dgram.SocketType;
 
     constructor(options: Options) {
@@ -26,6 +27,8 @@ export class NodeMndp extends events.EventEmitter {
         
         this.port = options.port || this.default.port;
         this.host = options.host || this.default.host;
+
+        this.started = false;
         
         this.registerListeners();
         
@@ -37,6 +40,7 @@ export class NodeMndp extends events.EventEmitter {
     start(): void
     {
         if (this.server) {
+            this.started = true;
             this.server.bind(this.port, this.host)
         }
     }
@@ -46,8 +50,9 @@ export class NodeMndp extends events.EventEmitter {
      */
     stop(): void
     {
-        if (this.server) {
+        if (this.server && this.started) {
             this.server.close();
+            this.started = false;
         }
     }
 
